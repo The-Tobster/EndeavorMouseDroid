@@ -3,8 +3,8 @@ import pigpio
 
 # Setup Pi GPIO (example for L298N motor driver)
 pi = pigpio.pi()
-ENA, IN1, IN2 = 12, 23, 24  # Motor A
-ENB, IN3, IN4 = 13, 27, 22  # Motor B
+ENA, IN1, IN2 = 21, 20, 16  # Motor A
+ENB, IN3, IN4 = 26, 19, 13  # Motor B
 
 for pin in [IN1, IN2, IN3, IN4]:
     pi.set_mode(pin, pigpio.OUTPUT)
