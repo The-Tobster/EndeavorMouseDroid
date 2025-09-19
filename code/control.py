@@ -1,33 +1,45 @@
 import socket
 import pigpio
 
-# Setup Pi GPIO (example for L298N motor driver)
 pi = pigpio.pi()
-ENA, IN1, IN2 = 21, 20, 16  # Motor A
-ENB, IN3, IN4 = 26, 19, 13  # Motor B
+if not pi.connected:
+    exit()
 
-for pin in [IN1, IN2, IN3, IN4]:
-    pi.set_mode(pin, pigpio.OUTPUT)
-    pi.write(pin, 0)
+# Motor pins (L298N)
+ENA, IN1, IN2 = 21, 20, 16
 
-for pwm in [ENA, ENB]:
-    pi.set_mode(pwm, pigpio.OUTPUT)
-    pi.set_PWM_frequency(pwm, 1000)
+pi.set_mode(IN1, pigpio.OUTPUT)
+pi.set_mode(IN2, pigpio.OUTPUT)
+pi.set_mode(ENA, pigpio.OUTPUT)
+pi.set_PWM_frequency(ENA, 1000)  # 1kHz PWM
 
-def set_motor(left, right):
-    # left/right: -100 to 100
-    def motor(speed, ena, in1, in2):
-        if speed >= 0:
-            pi.write(in1, 1); pi.write(in2, 0)
-        else:
-            pi.write(in1, 0); pi.write(in2, 1)
-        pi.set_PWM_dutycycle(ena, min(abs(speed),100)*2.55)
+# Servo pin
+SERVO = 18
+pi.set_mode(SERVO, pigpio.OUTPUT)
 
-    motor(left, ENA, IN1, IN2)
-    motor(right, ENB, IN3, IN4)
+def set_motor(speed):
+    """speed = -100..100"""
+    if speed > 0:
+        pi.write(IN1, 1)
+        pi.write(IN2, 0)
+    elif speed < 0:
+        pi.write(IN1, 0)
+        pi.write(IN2, 1)
+    else:
+        pi.write(IN1, 0)
+        pi.write(IN2, 0)
+    pi.set_PWM_dutycycle(ENA, min(abs(speed), 100) * 2.55)
 
-# Networking
-HOST = ''  # listen on all interfaces
+def set_servo(angle):
+    """
+    angle = -45..45 degrees
+    Maps to ~1000–2000 µs pulse
+    """
+    pulse = 1500 + (angle * 500 // 45)  # center=1500, left=1000, right=2000
+    pi.set_servo_pulsewidth(SERVO, pulse)
+
+# Networking setup
+HOST = ''  
 PORT = 5000
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((HOST, PORT))
@@ -42,19 +54,25 @@ try:
         data = conn.recv(1024).decode().strip()
         if not data:
             break
-
         print("Command:", data)
 
         if data == "forward":
-            set_motor(80, 80)
+            set_motor(40)
         elif data == "back":
-            set_motor(-80, -80)
-        elif data == "left":
-            set_motor(-60, 60)
-        elif data == "right":
-            set_motor(60, -60)
+            set_motor(-40)
         elif data == "stop":
-            set_motor(0, 0)
+            set_motor(0)
+        elif data == "left":
+            set_servo(-30)
+        elif data == "right":
+            set_servo(30)
+        elif data == "center":
+            set_servo(0)
+        elif data == "end":
+            print("Shutting down control...")
+            set_motor(0)
+            set_servo(0)
+            break
 
 except KeyboardInterrupt:
     pass
@@ -62,4 +80,5 @@ except KeyboardInterrupt:
 finally:
     conn.close()
     server.close()
+    pi.set_servo_pulsewidth(SERVO, 0)  # turn off servo PWM
     pi.stop()
