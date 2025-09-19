@@ -59,9 +59,9 @@ try:
         print("Command:", data)
 
         if data == "forward":
-            set_motor(40)
+            set_motor(75)
         elif data == "back":
-            set_motor(-40)
+            set_motor(-75)
         elif data == "stop":
             set_motor(0)
         elif data == "left":
