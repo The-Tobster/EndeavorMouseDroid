@@ -1,5 +1,6 @@
 import socket
 import pigpio
+import time
 
 pi = pigpio.pi()
 if not pi.connected:
@@ -30,13 +31,30 @@ def set_motor(speed):
         pi.write(IN2, 0)
     pi.set_PWM_dutycycle(ENA, min(abs(speed), 100) * 2.55)
 
-def set_servo(angle):
+current_angle = 0  # keep track of where the servo is
+
+def set_servo(target_angle, step=2, delay=0.02):
     """
-    angle = -45..45 degrees
-    Maps to ~1000–2000 µs pulse
+    Move servo gradually to target_angle
+    target_angle: -45..45
+    step: how many degrees per update
+    delay: pause between updates (seconds)
     """
-    pulse = 1500 + (angle * 500 // 45)  # center=1500, left=1000, right=2000
-    pi.set_servo_pulsewidth(SERVO, pulse)
+    global current_angle
+    while current_angle != target_angle:
+        if current_angle < target_angle:
+            current_angle += step
+            if current_angle > target_angle:
+                current_angle = target_angle
+        elif current_angle > target_angle:
+            current_angle -= step
+            if current_angle < target_angle:
+                current_angle = target_angle
+
+        # convert angle to pulse width
+        pulse = 1500 + (current_angle * 500 // 45)
+        pi.set_servo_pulsewidth(SERVO, pulse)
+        time.sleep(delay)
 
 # Networking setup
 HOST = ''  
