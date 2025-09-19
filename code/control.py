@@ -63,9 +63,9 @@ try:
         elif data == "stop":
             set_motor(0)
         elif data == "left":
-            set_servo(-30)
+            set_servo(-25)
         elif data == "right":
-            set_servo(30)
+            set_servo(25)
         elif data == "center":
             set_servo(0)
         elif data == "end":
