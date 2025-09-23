@@ -1,86 +1,85 @@
-import socket
+# server_pi.py
 import pigpio
+import socket
 
+# --- Motor Pins (L298N single channel) ---
+ENA = 20   # PWM enable
+IN1 = 21   # direction
+IN2 = 16   # direction
+SERVO = 18 # must support hardware PWM
+
+# --- Setup pigpio ---
 pi = pigpio.pi()
 if not pi.connected:
-    exit()
+    exit("Pigpio not running!")
 
-# Motor pins (L298N)
-ENA, IN1, IN2 = 21, 20, 16
+for pin in [ENA, IN1, IN2]:
+    pi.set_mode(pin, pigpio.OUTPUT)
 
-pi.set_mode(IN1, pigpio.OUTPUT)
-pi.set_mode(IN2, pigpio.OUTPUT)
-pi.set_mode(ENA, pigpio.OUTPUT)
+# Setup ENA for PWM (speed control)
 pi.set_PWM_frequency(ENA, 1000)  # 1kHz PWM
+pi.set_PWM_range(ENA, 100)
 
-# Servo pin
-SERVO = 18
-pi.set_mode(SERVO, pigpio.OUTPUT)
+# --- Motor control ---
+def stop():
+    pi.set_PWM_dutycycle(ENA, 0)
+    pi.write(IN1, 0)
+    pi.write(IN2, 0)
 
-def set_motor(speed):
-    """speed = -100..100"""
-    if speed > 0:
-        pi.write(IN1, 1)
-        pi.write(IN2, 0)
-    elif speed < 0:
-        pi.write(IN1, 0)
-        pi.write(IN2, 1)
-    else:
-        pi.write(IN1, 0)
-        pi.write(IN2, 0)
-    pi.set_PWM_dutycycle(ENA, min(abs(speed), 100) * 2.55)
+def forward(speed=50):
+    pi.write(IN1, 1)
+    pi.write(IN2, 0)
+    pi.set_PWM_dutycycle(ENA, speed)  # % duty cycle (0–100)
 
-current_angle = 0  # keep track of where the servo is
+def backward(speed=50):
+    pi.write(IN1, 0)
+    pi.write(IN2, 1)
+    pi.set_PWM_dutycycle(ENA, speed)
 
+# --- Servo control ---
 def set_servo(angle):
-    """
-    angle = -45..45 degrees
-    Maps to ~1000–2000 µs pulse
-    """
-    pulse = 1500 + (angle * 500 // 45)  # center=1500, left=1000, right=2000
+    """Set servo instantly to angle (-45 to +45)."""
+    pulse = 1500 + (angle * 500 // 45)  # map angle → µs
     pi.set_servo_pulsewidth(SERVO, pulse)
 
-# Networking setup
-HOST = ''  
+# --- Network Server ---
+HOST = "0.0.0.0"
 PORT = 5000
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((HOST, PORT))
 server.listen(1)
+print("Waiting for client...")
 
-print("Waiting for connection...")
 conn, addr = server.accept()
-print("Connected by", addr)
+print(f"Connected to {addr}")
 
 try:
+    set_servo(0)  # center steering
     while True:
-        data = conn.recv(1024).decode().strip()
+        data = conn.recv(1)
         if not data:
             break
-        print("Command:", data)
+        key = data.decode("utf-8").lower()
 
-        if data == "forward":
-            set_motor(100)
-        elif data == "back":
-            set_motor(-100)
-        elif data == "stop":
-            set_motor(0)
-        elif data == "left":
-            set_servo(-23)
-        elif data == "right":
-            set_servo(23)
-        elif data == "center":
-            set_servo(0)
-        elif data == "end":
-            print("Shutting down control...")
-            set_motor(0)
+        if key == "w":
+            forward(50)   # 50% speed forward
+        elif key == "s":
+            backward(50)  # 50% speed backward
+        elif key == "a":
+            set_servo(-30)  # turn left
+        elif key == "d":
+            set_servo(30)   # turn right
+        elif key == " ":
+            stop()
+            set_servo(0)   # center steering
+        elif key == "q":
+            stop()
             set_servo(0)
             break
-
-except KeyboardInterrupt:
-    pass
-
 finally:
+    stop()
+    pi.set_servo_pulsewidth(SERVO, 0)  # release servo
+    pi.stop()
     conn.close()
     server.close()
-    pi.set_servo_pulsewidth(SERVO, 0)  # turn off servo PWM
-    pi.stop()
+    print("Server closed")
