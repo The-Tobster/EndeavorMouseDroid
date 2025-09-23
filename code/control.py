@@ -43,7 +43,7 @@ def set_servo(angle):
     pi.set_servo_pulsewidth(SERVO, pulse)
 
 # --- Network Server ---
-HOST = "192.168.0.102"
+HOST = "0.0.0.0"
 PORT = 5000
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((HOST, PORT))
