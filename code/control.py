@@ -6,7 +6,7 @@ import time
 GPIO.setmode(GPIO.BCM)
 
 # Motor pins (L298N)
-ENA, IN1, IN2 = 20, 21, 16
+ENA, IN1, IN2 = 21, 20, 16
 GPIO.setup([ENA, IN1, IN2], GPIO.OUT)
 motor_pwm = GPIO.PWM(ENA, 1000)  # PWM at 1kHz
 motor_pwm.start(0)
