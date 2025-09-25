@@ -1,85 +1,81 @@
-# server_pi.py
-import pigpio
 import socket
+import RPi.GPIO as GPIO
+import time
 
-# --- Motor Pins (L298N single channel) ---
-ENA = 20   # PWM enable
-IN1 = 21   # direction
-IN2 = 16   # direction
-SERVO = 18 # must support hardware PWM
+# GPIO setup
+GPIO.setmode(GPIO.BCM)
 
-# --- Setup pigpio ---
-pi = pigpio.pi()
-if not pi.connected:
-    exit("Pigpio not running!")
+# Motor pins (L298N)
+ENA, IN1, IN2 = 20, 21, 16
+GPIO.setup([ENA, IN1, IN2], GPIO.OUT)
+motor_pwm = GPIO.PWM(ENA, 1000)  # PWM at 1kHz
+motor_pwm.start(0)
 
-for pin in [ENA, IN1, IN2]:
-    pi.set_mode(pin, pigpio.OUTPUT)
+# Servo pin
+SERVO = 18
+GPIO.setup(SERVO, GPIO.OUT)
+servo_pwm = GPIO.PWM(SERVO, 50)  # 50Hz
+servo_pwm.start(0)
 
-# Setup ENA for PWM (speed control)
-pi.set_PWM_frequency(ENA, 1000)  # 1kHz PWM
-pi.set_PWM_range(ENA, 100)
+# State variables
+forward_active = False
+backward_active = False
+left_active = False
+right_active = False
 
-# --- Motor control ---
-def stop():
-    pi.set_PWM_dutycycle(ENA, 0)
-    pi.write(IN1, 0)
-    pi.write(IN2, 0)
+# Helper functions
+def set_motor(forward, backward):
+    if forward:
+        GPIO.output(IN1, GPIO.HIGH)
+        GPIO.output(IN2, GPIO.LOW)
+        motor_pwm.ChangeDutyCycle(60)  # speed %
+    elif backward:
+        GPIO.output(IN1, GPIO.LOW)
+        GPIO.output(IN2, GPIO.HIGH)
+        motor_pwm.ChangeDutyCycle(60)
+    else:
+        motor_pwm.ChangeDutyCycle(0)
 
-def forward(speed=50):
-    pi.write(IN1, 1)
-    pi.write(IN2, 0)
-    pi.set_PWM_dutycycle(ENA, speed)  # % duty cycle (0–100)
+def set_servo(left, right):
+    if left:
+        servo_pwm.ChangeDutyCycle(10)  # adjust for your servo
+    elif right:
+        servo_pwm.ChangeDutyCycle(5)   # adjust for your servo
+    else:
+        servo_pwm.ChangeDutyCycle(7.5) # center
 
-def backward(speed=50):
-    pi.write(IN1, 0)
-    pi.write(IN2, 1)
-    pi.set_PWM_dutycycle(ENA, speed)
-
-# --- Servo control ---
-def set_servo(angle):
-    """Set servo instantly to angle (-45 to +45)."""
-    pulse = 1500 + (angle * 500 // 45)  # map angle → µs
-    pi.set_servo_pulsewidth(SERVO, pulse)
-
-# --- Network Server ---
+# Networking
 HOST = "0.0.0.0"
-PORT = 5000
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind((HOST, PORT))
-server.listen(1)
-print("Waiting for client...")
+PORT = 65432
 
-conn, addr = server.accept()
-print(f"Connected to {addr}")
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.bind((HOST, PORT))
+    s.listen()
+    print("Waiting for connection...")
+    conn, addr = s.accept()
+    print(f"Connected by {addr}")
 
-try:
-    set_servo(0)  # center steering
-    while True:
-        data = conn.recv(1)
-        if not data:
-            break
-        key = data.decode("utf-8").lower()
+    try:
+        while True:
+            data = conn.recv(1024)
+            if not data:
+                break
+            msg = data.decode().strip()
 
-        if key == "w":
-            forward(50)   # 50% speed forward
-        elif key == "s":
-            backward(50)  # 50% speed backward
-        elif key == "a":
-            set_servo(-30)  # turn left
-        elif key == "d":
-            set_servo(30)   # turn right
-        elif key == " ":
-            stop()
-            set_servo(0)   # center steering
-        elif key == "q":
-            stop()
-            set_servo(0)
-            break
-finally:
-    stop()
-    pi.set_servo_pulsewidth(SERVO, 0)  # release servo
-    pi.stop()
-    conn.close()
-    server.close()
-    print("Server closed")
+            if msg == "w_down": forward_active = True
+            if msg == "w_up": forward_active = False
+            if msg == "s_down": backward_active = True
+            if msg == "s_up": backward_active = False
+            if msg == "a_down": left_active = True
+            if msg == "a_up": left_active = False
+            if msg == "d_down": right_active = True
+            if msg == "d_up": right_active = False
+
+            # Apply states
+            set_motor(forward_active, backward_active)
+            set_servo(left_active, right_active)
+
+    finally:
+        motor_pwm.stop()
+        servo_pwm.stop()
+        GPIO.cleanup()
