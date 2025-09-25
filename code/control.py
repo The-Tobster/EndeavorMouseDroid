@@ -31,11 +31,9 @@ def set_motor(forward, backward):
         motor_pwm.ChangeDutyCycle(100)  # speed %
     elif backward:
         GPIO.output(IN1, GPIO.LOW)
-        GPIO.output(IN2, GPIO.HIGH)
+        GPIO.output(IN2, GPIO.LOW)
         motor_pwm.ChangeDutyCycle(100)
     else:
-        GPIO.output(IN1, GPIO.LOW)
-        GPIO.output(IN2, GPIO.LOW)
         motor_pwm.ChangeDutyCycle(0)
 
 def set_servo(left, right):
