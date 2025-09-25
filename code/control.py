@@ -38,9 +38,9 @@ def set_motor(forward, backward):
 
 def set_servo(left, right):
     if left:
-        servo_pwm.ChangeDutyCycle(10)  # adjust for your servo
+        servo_pwm.ChangeDutyCycle(6.6)  # adjust for your servo
     elif right:
-        servo_pwm.ChangeDutyCycle(5)   # adjust for your servo
+        servo_pwm.ChangeDutyCycle(8.4)   # adjust for your servo
     else:
         servo_pwm.ChangeDutyCycle(7.5) # center
 
