@@ -79,19 +79,19 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             # Apply states
             # Forward/backward
             if state["forward"] and not state["backward"]:
-                set_motor(TRUE, FALSE)
+                set_motor(True, False)
             elif state["backward"] and not state["forward"]:
-                set_motor(FALSE, TRUE)
+                set_motor(False, True)
             else:
-                set_motor(FALSE, FALSE)
+                set_motor(False, False)
             
             # Left/right
             if state["left"] and not state["right"]:
-                set_servo(TRUE, FALSE)
+                set_servo(True, False)
             elif state["right"] and not state["left"]:
-                set_servo(FALSE, TRUE)
+                set_servo(False, True)
             else:
-                set_servo(FALSE, FALSE)
+                set_servo(False, False)
 
     finally:
         motor_pwm.stop()
