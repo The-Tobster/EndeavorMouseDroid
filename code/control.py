@@ -59,21 +59,21 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 break
             msg = data.decode().strip()
 
-            if data == "w_down":
+            if msg == "w_down":
                 state["forward"] = True
-            elif data == "w_up":
+            elif msg == "w_up":
                 state["forward"] = False
-            elif data == "s_down":
+            elif msg == "s_down":
                 state["backward"] = True
-            elif data == "s_up":
+            elif msg == "s_up":
                 state["backward"] = False
-            elif data == "a_down":
+            elif msg == "a_down":
                 state["left"] = True
-            elif data == "a_up":
+            elif msg == "a_up":
                 state["left"] = False
-            elif data == "d_down":
+            elif msg == "d_down":
                 state["right"] = True
-            elif data == "d_up":
+            elif msg == "d_up":
                 state["right"] = False
 
             # Apply states
