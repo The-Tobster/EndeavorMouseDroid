@@ -18,10 +18,7 @@ servo_pwm = GPIO.PWM(SERVO, 50)  # 50Hz
 servo_pwm.start(0)
 
 # State variables
-forward_active = False
-backward_active = False
-left_active = False
-right_active = False
+state = {"forward": False, "backward": False, "left": False, "right": False}
 
 # Helper functions
 def set_motor(forward, backward):
@@ -62,18 +59,39 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 break
             msg = data.decode().strip()
 
-            if msg == "w_down": forward_active = True
-            if msg == "w_up": forward_active = False
-            if msg == "s_down": backward_active = True
-            if msg == "s_up": backward_active = False
-            if msg == "a_down": left_active = True
-            if msg == "a_up": left_active = False
-            if msg == "d_down": right_active = True
-            if msg == "d_up": right_active = False
+            if data == "w_down":
+                state["forward"] = True
+            elif data == "w_up":
+                state["forward"] = False
+            elif data == "s_down":
+                state["backward"] = True
+            elif data == "s_up":
+                state["backward"] = False
+            elif data == "a_down":
+                state["left"] = True
+            elif data == "a_up":
+                state["left"] = False
+            elif data == "d_down":
+                state["right"] = True
+            elif data == "d_up":
+                state["right"] = False
 
             # Apply states
-            set_motor(forward_active, backward_active)
-            set_servo(left_active, right_active)
+            # Forward/backward
+            if state["forward"] and not state["backward"]:
+                set_motor(TRUE, FALSE)
+            elif state["backward"] and not state["forward"]:
+                set_motor(FALSE, TRUE)
+            else:
+                set_motor(FALSE, FALSE)
+            
+            # Left/right
+            if state["left"] and not state["right"]:
+                set_servo(TRUE, FALSE)
+            elif state["right"] and not state["left"]:
+                set_servo(FALSE, TRUE)
+            else:
+                set_servo(FALSE, FALSE)
 
     finally:
         motor_pwm.stop()
