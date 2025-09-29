@@ -1,6 +1,7 @@
 import socket
 import RPi.GPIO as GPIO
 import time
+import json
 
 # GPIO setup
 GPIO.setmode(GPIO.BCM)
@@ -21,27 +22,27 @@ servo_pwm.start(0)
 state = {"forward": False, "backward": False, "left": False, "right": False}
 
 # Helper functions
-def set_motor(forward, backward):
-    if forward:
+def set_motor(speed):
+    if speed>0:
         GPIO.output(IN1, GPIO.HIGH)
         GPIO.output(IN2, GPIO.LOW)
-        motor_pwm.ChangeDutyCycle(100)  # speed %
-    elif backward:
+        motor_pwm.ChangeDutyCycle(abs(speed))  # speed %
+    elif speed<0:
         GPIO.output(IN1, GPIO.LOW)
         GPIO.output(IN2, GPIO.HIGH)
-        motor_pwm.ChangeDutyCycle(100)
+        motor_pwm.ChangeDutyCycle(abs(speed))
     else:
         GPIO.output(IN1, GPIO.LOW)
         GPIO.output(IN2, GPIO.LOW)
-        motor_pwm.ChangeDutyCycle(100)
+        motor_pwm.ChangeDutyCycle(abs(speed))
 
-def set_servo(left, right):
-    if left:
-        servo_pwm.ChangeDutyCycle(6.6)  # adjust for your servo
-    elif right:
-        servo_pwm.ChangeDutyCycle(8.4)   # adjust for your servo
+def set_servo(angle):
+    if angle>0:
+        servo_pwm.ChangeDutyCycle(7.5-angle/32)  # adjust for your servo
+    elif angle<0:
+        servo_pwm.ChangeDutyCycle(7.5-angle/32)   # adjust for your servo
     else:
-        servo_pwm.ChangeDutyCycle(7.5) # center
+        servo_pwm.ChangeDutyCycle(7.5-angle/32) # center
 
 # Networking
 HOST = "0.0.0.0"
@@ -56,44 +57,13 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
     try:
         while True:
-            data = conn.recv(1024)
+            data = conn.recv(4096).decode('utf-8')
             if not data:
                 break
-            msg = data.decode().strip()
+            msg = json.loads(data)
 
-            if msg == "w_down":
-                state["forward"] = True
-            elif msg == "w_up":
-                state["forward"] = False
-            elif msg == "s_down":
-                state["backward"] = True
-            elif msg == "s_up":
-                state["backward"] = False
-            elif msg == "a_down":
-                state["left"] = True
-            elif msg == "a_up":
-                state["left"] = False
-            elif msg == "d_down":
-                state["right"] = True
-            elif msg == "d_up":
-                state["right"] = False
-
-            # Apply states
-            # Forward/backward
-            if state["forward"] and not state["backward"]:
-                set_motor(True, False)
-            elif state["backward"] and not state["forward"]:
-                set_motor(False, True)
-            else:
-                set_motor(False, False)
-            
-            # Left/right
-            if state["left"] and not state["right"]:
-                set_servo(True, False)
-            elif state["right"] and not state["left"]:
-                set_servo(False, True)
-            else:
-                set_servo(False, False)
+            set_motor(msg[0])
+            set_servo(msg[1])
 
     finally:
         motor_pwm.stop()
