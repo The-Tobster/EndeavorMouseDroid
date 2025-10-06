@@ -38,11 +38,11 @@ def set_motor(speed):
 
 def set_servo(angle):
     if angle>0:
-        servo_pwm.set_servo_pulsewidth(SERVO, 7.5-angle/32)  # adjust for your servo
+        servo_pwm.set_servo_pulsewidth(SERVO, 1500 - (angle * (180 / 32)))  # adjust for your servo
     elif angle<0:
-        servo_pwm.set_servo_pulsewidth(SERVO, 7.5-angle/32)   # adjust for your servo
+        servo_pwm.set_servo_pulsewidth(SERVO, 1500 - (angle * (180 / 32)))   # adjust for your servo
     else:
-        servo_pwm.set_servo_pulsewidth(SERVO, 7.5-angle/32) # center
+        servo_pwm.set_servo_pulsewidth(SERVO, 1500 - (angle * (180 / 32))) # center
 
 # Networking
 HOST = "0.0.0.0"
@@ -78,6 +78,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
     finally:
         motor_pwm.stop()
+        servo_pwm.set_servo_pulsewidth(SERVO, 0)
         servo_pwm.stop()
         GPIO.cleanup()
         picam2.stop()
