@@ -2,7 +2,7 @@ import socket
 import RPi.GPIO as GPIO
 import time
 import json
-from picamera2 import Picamera2
+from picamera2 import Picamera2, Preview
 
 # GPIO setup
 GPIO.setmode(GPIO.BCM)
