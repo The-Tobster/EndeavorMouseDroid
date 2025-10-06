@@ -2,7 +2,8 @@ import socket
 import RPi.GPIO as GPIO
 import time
 import json
-from picamzero import Camera
+from picamera2 import Picamera2
+import cv2
 
 # GPIO setup
 GPIO.setmode(GPIO.BCM)
@@ -50,8 +51,14 @@ HOST = "0.0.0.0"
 PORT = 65432
 
 # camera start
-cam = Camera()
-cam.start_preview()
+picam2 = Picamera2()
+
+# Configure the camera for video mode
+video_config = picam2.create_video_configuration(main={"size": (1280, 720)})
+picam2.configure(video_config)
+
+# Start the camera
+picam2.start()
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.bind((HOST, PORT))
@@ -69,8 +76,15 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
             set_motor(msg[0])
             set_servo(msg[1])
+            
+            frame = picam2.capture_array()
+        
+            # Display the frame
+            cv2.imshow("Camera Preview", frame)
 
     finally:
         motor_pwm.stop()
         servo_pwm.stop()
         GPIO.cleanup()
+        picam2.stop()
+        cv2.destroyAllWindows()
