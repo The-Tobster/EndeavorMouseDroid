@@ -2,6 +2,7 @@ import socket
 import RPi.GPIO as GPIO
 import time
 import json
+from picamzero import Camera
 
 # GPIO setup
 GPIO.setmode(GPIO.BCM)
@@ -47,6 +48,10 @@ def set_servo(angle):
 # Networking
 HOST = "0.0.0.0"
 PORT = 65432
+
+# camera start
+cam = Camera()
+cam.start_preview()
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.bind((HOST, PORT))
