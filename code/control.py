@@ -3,6 +3,7 @@ import RPi.GPIO as GPIO
 import time
 import json
 from picamera2 import Picamera2, Preview
+import pigpio
 
 # GPIO setup
 GPIO.setmode(GPIO.BCM)
@@ -15,9 +16,7 @@ motor_pwm.start(0)
 
 # Servo pin
 SERVO = 18
-GPIO.setup(SERVO, GPIO.OUT)
-servo_pwm = GPIO.PWM(SERVO, 50)  # 50Hz
-servo_pwm.start(0)
+servo_pwm = pigpio.pi()  # 50Hz
 
 # State variables
 state = {"forward": False, "backward": False, "left": False, "right": False}
@@ -39,11 +38,11 @@ def set_motor(speed):
 
 def set_servo(angle):
     if angle>0:
-        servo_pwm.ChangeDutyCycle(7.5-angle/32)  # adjust for your servo
+        servo_pwm.set_servo_pulsewidth(SERVO, 7.5-angle/32)  # adjust for your servo
     elif angle<0:
-        servo_pwm.ChangeDutyCycle(7.5-angle/32)   # adjust for your servo
+        servo_pwm.set_servo_pulsewidth(SERVO, 7.5-angle/32)   # adjust for your servo
     else:
-        servo_pwm.ChangeDutyCycle(7.5-angle/32) # center
+        servo_pwm.set_servo_pulsewidth(SERVO, 7.5-angle/32) # center
 
 # Networking
 HOST = "0.0.0.0"
