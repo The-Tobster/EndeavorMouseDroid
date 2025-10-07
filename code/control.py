@@ -54,7 +54,7 @@ picam2 = Picamera2()
 picam2.configure(picam2.create_video_configuration(main={"size": (640, 480)}))
 picam2.start()
 
-ip = "192.168.1.10"  # replace with your Windows PC's IP
+ip = "192.168.0.100"  # replace with your Windows PC's IP
 
 cmd = [
     "gst-launch-1.0", "v4l2src", "!",
