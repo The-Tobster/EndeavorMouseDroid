@@ -54,18 +54,15 @@ picam2 = Picamera2()
 picam2.configure(picam2.create_video_configuration(main={"size": (640, 480)}))
 picam2.start()
 
-ip = "192.168.0.100"  # replace with your Windows PC's IP
+ip = "192.168.1.100"  # replace with your Windows PC's IP
 
 cmd = [
-    "gst-launch-1.0", "v4l2src", "!",
-    "video/x-raw,width=640,height=480,framerate=30/1", "!",
-    "videoconvert", "!",
-    "x264enc", "tune=zerolatency", "bitrate=800", "speed-preset=superfast", "!",
-    "rtph264pay", "!",
-    f"udpsink", f"host={ip}", "port=5000"
+    "gst-launch-1.0",
+    "fdsrc", "!", "h264parse", "!", "rtph264pay", "config-interval=1", "pt=96", "!",
+    f"udpsink", f"host={ip}", f"port={5000}"
 ]
 
-subprocess.Popen(cmd)
+p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.bind((HOST, PORT))
