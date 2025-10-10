@@ -51,17 +51,23 @@ PORT = 65432
 
 # camera start
 picam2 = Picamera2()
-video_config = picam2.create_video_configuration(
-    main={"size": (640, 480), "format": "RGB888"}
-)
-picam2.configure(video_config)
+config = picam2.create_preview_configuration(main={"size": (640, 480), "format": "RGB888"})
+picam2.configure(config)
 picam2.start()
 
-# Record H264 to a file for streaming
-h264_file = "/tmp/stream.h264"
-picam2.start_recording(h264_file, h264_file)  # encoding is here
+pc_ip = "192.168.1.100"  # replace with your Windows PC's IP
+udp_port = 5001
 
-ip = "192.168.1.100"  # replace with your Windows PC's IP
+pipeline = (
+    f"appsrc ! videoconvert ! video/x-raw,format=RGB,width=640,height=480,framerate=30/1 "
+    f"! videorate ! videoconvert ! ximagesink"
+)
+# For actual UDP streaming you can replace ximagesink with udpsink
+# pipeline = f"appsrc ! videoconvert ! video/x-raw,format=RGB ! udpsink host={pc_ip} port={udp_port}"
+
+gst_pipeline = Gst.parse_launch(pipeline)
+appsrc = gst_pipeline.get_by_name("appsrc0")
+gst_pipeline.set_state(Gst.State.PLAYING)
 
 cmd = [
     "gst-launch-1.0",
@@ -89,6 +95,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
             set_motor(msg[0])
             set_servo(msg[1])
+            frame = picam2.capture_array()
             
 
     finally:
