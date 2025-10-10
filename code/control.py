@@ -64,7 +64,7 @@ cmd = [
     f"udpsink", f"host={ip}", f"port={5001}"
 ]
 
-picam2.start_recording(encoder, FileOutput(subprocess.Popen(cmd).subprocess.PIPE)
+picam2.start_recording(encoder, FileOutput(subprocess.Popen(cmd).subprocess.PIPE))
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.bind((HOST, PORT))
