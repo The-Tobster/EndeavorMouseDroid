@@ -5,7 +5,6 @@ import json
 from picamera2 import Picamera2
 import subprocess
 import pigpio
-from gi.repository import Gst
 
 # GPIO setup
 GPIO.setmode(GPIO.BCM)
