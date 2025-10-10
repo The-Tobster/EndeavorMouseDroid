@@ -3,6 +3,7 @@ import RPi.GPIO as GPIO
 import time
 import json
 from picamera2 import Picamera2
+from picamera2.encoders import H264Encoder
 import subprocess
 import pigpio
 import os
@@ -53,24 +54,19 @@ PORT = 65432
 # camera start
 picam2 = Picamera2()
 picam2.configure(picam2.create_video_configuration(main={"size": (640, 480)}))
-picam2.start()
+encoder = H264Encoder()
 
 # Temporary file for streaming
-h264_file = "/tmp/stream.h264"
-if os.path.exists(h264_file):
-    os.remove(h264_file)
+picam2.start_recording(encoder, "/dev/stdout")
 
-# Start recording to file
-picam2.start_recording(h264_file)
-
-pc_ip = "192.168.1.100"  # replace with your Windows PC's IP
-gst_cmd = [
+ip = "192.168.1.100"  # replace with your Windows PC's IP
+cmd = [
     "gst-launch-1.0",
-    "filesrc", f"location={h264_file}", "!", "h264parse", "!", "rtph264pay", "config-interval=1", "pt=96", "!",
-    "udpsink", f"host={pc_ip}", "port=5001"
+    "fdsrc", "!", "h264parse", "!", "rtph264pay", "config-interval=1", "pt=96", "!",
+    f"udpsink", f"host={ip}", f"port={5001}"
 ]
 
-gst_process = subprocess.Popen(gst_cmd)
+gst_process = subprocess.Popen(cmd, stdin=subprocess.PIPE)
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.bind((HOST, PORT))
     s.listen()
