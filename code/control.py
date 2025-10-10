@@ -54,7 +54,7 @@ PORT = 65432
 
 # camera start
 ip = "192.168.1.100"  # replace with your Windows PC's IP
-port = 5001           # receiving port
+port = 5200           # receiving port
 
 # ffmpeg command for UDP streaming
 cmd = [
