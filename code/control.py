@@ -53,7 +53,7 @@ PORT = 65432
 picam2 = Picamera2()
 video_config = picam2.create_video_configuration(main={"size": (640, 480)})
 picam2.configure(video_config)
-picam2.start_recording("/dev/stdout", format="h264")  # stream to stdout
+picam2.start_recording("/dev/stdout")  # stream to stdout
 
 pc_ip = "192.168.1.100"  # replace with your Windows PC's IP
 udp_port = 5001
