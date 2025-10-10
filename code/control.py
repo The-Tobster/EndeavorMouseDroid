@@ -59,7 +59,7 @@ picam2.start()
 
 # Record H264 to a file for streaming
 h264_file = "/tmp/stream.h264"
-picam2.start_recording(h264_file)  # encoding is here
+picam2.start_recording(h264_file, h264_file)  # encoding is here
 
 ip = "192.168.1.100"  # replace with your Windows PC's IP
 
