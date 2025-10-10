@@ -2,7 +2,8 @@ import socket
 import RPi.GPIO as GPIO
 import time
 import json
-from picamera2 import Picamera2, H264Encoder, FileOutput
+from picamera2 import Picamera2
+from picamera2.encoder import H264Encoder
 import subprocess
 import pigpio
 import os
