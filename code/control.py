@@ -51,9 +51,15 @@ PORT = 65432
 
 # camera start
 picam2 = Picamera2()
-picam2.configure(picam2.create_video_configuration(main={"size": (640, 480), "format": "H264"}))
+video_config = picam2.create_video_configuration(
+    main={"size": (640, 480), "format": "RGB888"}  # NOT H264!
+)
+
+picam2.configure(video_config)
+
+# Record H264 to a file for streaming
 h264_file = "/tmp/stream.h264"
-picam2.start_recording(h264_file)
+picam2.start_recording(h264_file, format="h264")  # encoding is here
 
 ip = "192.168.1.100"  # replace with your Windows PC's IP
 
