@@ -52,23 +52,23 @@ PORT = 65432
 # camera start
 picam2 = Picamera2()
 video_config = picam2.create_video_configuration(
-    main={"size": (640, 480), "format": "RGB888"}  # NOT H264!
+    main={"size": (640, 480), "format": "RGB888"}
 )
-
 picam2.configure(video_config)
+picam2.start()
 
 # Record H264 to a file for streaming
 h264_file = "/tmp/stream.h264"
-picam2.start_recording(h264_file, format="h264")  # encoding is here
+picam2.start_recording(h264_file)  # encoding is here
 
 ip = "192.168.1.100"  # replace with your Windows PC's IP
 
 cmd = [
     "gst-launch-1.0",
-    "filesrc", f"location={h264_file}", "do-timestamp=true", "!",
-    "h264parse", "!",
-    f"rtph264pay", "config-interval=1", "pt=96", "!",
-    f"udpsink", f"host={ip}", f"port={5478}", "sync=false", "async=false"
+    "filesrc", f"location={h264_file}", "!", 
+    "h264parse", "!", 
+    "rtph264pay", "config-interval=1", "pt=96", "!", 
+    f"udpsink", f"host={ip}", f"port={5478}"
 ]
 
 p = subprocess.Popen(cmd)
@@ -97,3 +97,4 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         servo_pwm.stop()
         GPIO.cleanup()
         picam2.stop()
+        p.terminate()
