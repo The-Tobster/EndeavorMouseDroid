@@ -59,7 +59,7 @@ ip = "192.168.1.100"  # replace with your Windows PC's IP
 cmd = [
     "gst-launch-1.0",
     "fdsrc", "!", "h264parse", "!", "rtph264pay", "config-interval=1", "pt=96", "!",
-    f"udpsink", f"host={ip}", f"port={5000}"
+    f"udpsink", f"host={ip}", f"port={5478}"
 ]
 
 p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
