@@ -5,9 +5,12 @@ import json
 from picamera2 import Picamera2
 import subprocess
 import pigpio
+from gi.repository import Gst
 
 # GPIO setup
 GPIO.setmode(GPIO.BCM)
+
+Gst.init(None)
 
 # Motor pins (L298N)
 ENA, IN1, IN2 = 21, 20, 16
