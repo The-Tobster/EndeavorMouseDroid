@@ -53,21 +53,29 @@ HOST = "0.0.0.0"
 PORT = 65432
 
 # camera start
+ip = "192.168.1.100"  # replace with your Windows PC's IP
+port = 5001           # receiving port
+
+# ffmpeg command for UDP streaming
+cmd = [
+    "ffmpeg",
+    "-re",
+    "-i", "pipe:0",  # read input from stdin
+    "-vcodec", "copy",
+    "-f", "mpegts",
+    f"udp://{ip}:{port}"
+]
+
+# open ffmpeg subprocess
+process = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+
+# initialize camera
 picam2 = Picamera2()
 picam2.configure(picam2.create_video_configuration(main={"size": (640, 480)}))
 encoder = H264Encoder()
+output = FileOutput(process.stdin)
 
-ip = "192.168.1.100"  # replace with your Windows PC's IP
-cmd = [
-    "ffmpeg",
-        "-f", "h264",          # input format
-        "-i", "pipe:0",        # input from stdin
-        "-vcodec", "copy",     # no re-encode
-        "-f", "mpegts",        # output format
-        "udp://192.168.1.100:5001"  # your computer's IP + port
-]
-
-picam2.start_recording(encoder, FileOutput(subprocess.Popen(cmd).subprocess.PIPE))
+picam2.start_recording(encoder, output)
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.bind((HOST, PORT))
