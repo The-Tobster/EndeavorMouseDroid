@@ -102,4 +102,4 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         servo_pwm.stop()
         GPIO.cleanup()
         picam2.stop()
-        gst_process.terminate()
+        process.terminate()
