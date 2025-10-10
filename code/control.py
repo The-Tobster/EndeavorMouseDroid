@@ -2,8 +2,7 @@ import socket
 import RPi.GPIO as GPIO
 import time
 import json
-from picamera2 import Picamera2
-from picamera2.encoders import H264Encoder
+from picamera2 import Picamera2, H264Encoder, FileOutput
 import subprocess
 import pigpio
 import os
@@ -57,7 +56,7 @@ picam2.configure(picam2.create_video_configuration(main={"size": (640, 480)}))
 encoder = H264Encoder()
 
 # Temporary file for streaming
-picam2.start_recording(encoder, "/dev/stdout")
+picam2.start_recording(encoder, FileOutput(ffmpeg_process.stdin))
 
 ip = "192.168.1.100"  # replace with your Windows PC's IP
 cmd = [
