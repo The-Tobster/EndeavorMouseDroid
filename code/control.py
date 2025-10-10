@@ -9,8 +9,6 @@ import pigpio
 # GPIO setup
 GPIO.setmode(GPIO.BCM)
 
-Gst.init(None)
-
 # Motor pins (L298N)
 ENA, IN1, IN2 = 21, 20, 16
 GPIO.setup([ENA, IN1, IN2], GPIO.OUT)
