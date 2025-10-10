@@ -59,9 +59,12 @@ encoder = H264Encoder()
 
 ip = "192.168.1.100"  # replace with your Windows PC's IP
 cmd = [
-    "gst-launch-1.0",
-    "fdsrc", "!", "h264parse", "!", "rtph264pay", "config-interval=1", "pt=96", "!",
-    f"udpsink", f"host={ip}", f"port={5001}"
+    "ffmpeg",
+        "-f", "h264",          # input format
+        "-i", "pipe:0",        # input from stdin
+        "-vcodec", "copy",     # no re-encode
+        "-f", "mpegts",        # output format
+        "udp://192.168.1.100:5001"  # your computer's IP + port
 ]
 
 picam2.start_recording(encoder, FileOutput(subprocess.Popen(cmd).subprocess.PIPE))
