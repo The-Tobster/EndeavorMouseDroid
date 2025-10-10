@@ -57,9 +57,6 @@ picam2 = Picamera2()
 picam2.configure(picam2.create_video_configuration(main={"size": (640, 480)}))
 encoder = H264Encoder()
 
-# Temporary file for streaming
-picam2.start_recording(encoder, FileOutput(ffmpeg_process.stdin))
-
 ip = "192.168.1.100"  # replace with your Windows PC's IP
 cmd = [
     "gst-launch-1.0",
@@ -67,7 +64,8 @@ cmd = [
     f"udpsink", f"host={ip}", f"port={5001}"
 ]
 
-gst_process = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+picam2.start_recording(encoder, FileOutput(subprocess.Popen(cmd).subprocess.PIPE)
+
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.bind((HOST, PORT))
     s.listen()
