@@ -93,7 +93,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
             set_motor(msg[0])
             set_servo(msg[1])
-            frame = picam2.capture_array()
             
 
     finally:
