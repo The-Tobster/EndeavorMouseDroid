@@ -2,9 +2,6 @@ import socket
 import RPi.GPIO as GPIO
 import time
 import json
-from picamera2 import Picamera2
-from picamera2.encoders import H264Encoder
-from picamera2.outputs import FileOutput
 import subprocess
 import pigpio
 import os
@@ -51,32 +48,6 @@ def set_servo(angle):
 # Networking
 HOST = "0.0.0.0"
 PORT = 65432
-
-# camera start
-ip = "192.168.1.100"  # replace with your Windows PC's IP
-port = 5200           # receiving port
-
-# ffmpeg command for UDP streaming
-cmd = [
-    "gst-launch-1.0",
-    "v4l2src", "device=/dev/video0", "!", 
-    "video/x-raw,width=640,height=480,framerate=30/1", "!", 
-    "videoconvert", "!", 
-    "x264enc", "tune=zerolatency", "bitrate=500", "speed-preset=ultrafast", "!", 
-    "rtph264pay", "config-interval=1", "pt=96", "!", 
-    f"udpsink", f"host={ip}", f"port={port}"
-]
-
-# open ffmpeg subprocess
-process = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-
-# initialize camera
-picam2 = Picamera2()
-picam2.configure(picam2.create_video_configuration(main={"size": (640, 480)}))
-encoder = H264Encoder()
-output = FileOutput(process.stdin)
-
-picam2.start_recording(encoder, output)
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.bind((HOST, PORT))
