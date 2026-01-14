@@ -3,8 +3,8 @@ import sys
 import time
 
 # Define the scripts to run
-script1 = 'subproces/Camera_Stream.py'
-script2 = 'subproces/control.py'
+script1 = 'code/subproces/Camera_Stream.py'
+script2 = 'code/subproces/control.py'
 
 print(f"Starting {script1} and {script2} concurrently...")
 
